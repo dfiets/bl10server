@@ -101,11 +101,11 @@ func processContent(content []byte) {
 	}
 }
 
-func getLength(conn net.Conn, numberOfBytes int) (int, err) {
+func getLength(conn net.Conn, numberOfBytes int) (int, error) {
 	bytesPacketLength := make([]byte, numberOfBytes)
 	_, err := conn.Read(bytesPacketLength)
 	if err != nil {
 		return 0, err
 	}
-	return util.BytesToInt(bytesPacketLength)
+	return util.BytesToInt(bytesPacketLength), nil
 }
