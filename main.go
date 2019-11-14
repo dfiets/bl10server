@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bl10/command"
+	"bl10/util"
+	"bytes"
 	"log"
 	"net"
 	"os"
-	"bytes"
 )
 
 func main() {
@@ -17,6 +19,7 @@ func startServer() {
 	if err != nil {
 		log.Print(err)
 	}
+
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -27,7 +30,6 @@ func startServer() {
 }
 
 func handleConnection(conn net.Conn) {
-
 	for {
 		readMessage(conn)
 	}
@@ -35,7 +37,7 @@ func handleConnection(conn net.Conn) {
 }
 
 func readMessage(conn net.Conn) {
-	p := make([]byte, 4)
+	p := make([]byte, 2)
 	for {
 		_, err := conn.Read(p)
 
@@ -44,20 +46,57 @@ func readMessage(conn net.Conn) {
 			os.Exit(1)
 		}
 
-		startBytes := bytes.Compare(p, []byte{0x78})
-		if startBytes == 0 {
-			log.Print("Start byte 0x78")
-			p2 := make([]byte, 8)
-			_, err := conn.Read(p2)
-			if err != nil {
-				log.Print(err)
-			}
-			startByte2 := bytes.Compare(p[0:4], []byte{0x78})
-			if startByte2 == 0 {
-				log.Print("also correct, now lenght")
-			}
-			log.Print(p[4:8])
+		packageLength := 0
+		packetLengthOneByte := bytes.Equal(p, []byte{0x78, 0x78})
+		packetLengthTwoBytes := bytes.Equal(p, []byte{0x79, 0x79})
+
+		if !(packetLengthOneByte || packetLengthTwoBytes) {
+			continue
+		} else if packetLengthOneByte {
+			packageLength = getLength(conn, 1)
+		} else {
+			packageLength = getLength(conn, 2)
+		}
+
+		content := make([]byte, packageLength)
+		_, err = conn.Read(content)
+
+		if err != nil {
+			log.Print(err)
+		}
+
+		closeBytes := make([]byte, 2)
+		_, err = conn.Read(closeBytes)
+		if bytes.Equal(closeBytes, []byte{0x0D, 0x0A}) {
+			log.Println("closeBytes")
+		} else {
+			log.Println("Something went wrong", closeBytes)
 		}
 	}
 
+}
+
+func processContent(content []byte) {
+	switch content[0] {
+	case 0x01:
+		log.Println("LOGIN")
+		command.ProcessLogin(con)
+	case 0x23:
+		log.Println("ONLINE COMMAND RESPONSE")
+	case 0x32:
+		log.Println("GPS LOCATION")
+	case 0x33:
+		log.Println("LOCATION INFORMATION")
+	case 0x80:
+		log.Println("ONLINE COMMAND")
+	case 0x98:
+		log.Println("INFORMATION TRANSMISSION PACKET")
+	default:
+		log.Println("UNKNOWN protocolnumber: ERROR!!!")
+	}
+}
+
+func getLength(conn net.Conn, numberOfBytes int) int {
+	bytesPacketLength := make([]byte, numberOfBytes)
+	return util.BytesToInt(bytesPacketLength)
 }
