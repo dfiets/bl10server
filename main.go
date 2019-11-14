@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bl10/command"
-	"bl10/util"
+	"bl10server/command"
+	"bl10server/util"
 	"bytes"
 	"log"
 	"net"
@@ -80,7 +80,7 @@ func processContent(content []byte) {
 	switch content[0] {
 	case 0x01:
 		log.Println("LOGIN")
-		command.ProcessLogin(con)
+		command.ProcessLogin(content)
 	case 0x23:
 		log.Println("ONLINE COMMAND RESPONSE")
 	case 0x32:
