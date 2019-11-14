@@ -53,10 +53,14 @@ func readMessage(conn net.Conn) {
 		if !(packetLengthOneByte || packetLengthTwoBytes) {
 			continue
 		} else if packetLengthOneByte {
-			packageLength = getLength(conn, 1)
+			packageLength, err = getLength(conn, 1)
 		} else {
-			packageLength = getLength(conn, 2)
+			packageLength, err = getLength(conn, 2)
 		}
+		if err != nil {
+			log.Print(err)
+		}
+
 		log.Println(packageLength)
 		content := make([]byte, packageLength)
 		_, err = conn.Read(content)
@@ -97,7 +101,11 @@ func processContent(content []byte) {
 	}
 }
 
-func getLength(conn net.Conn, numberOfBytes int) int {
+func getLength(conn net.Conn, numberOfBytes int) (int, err) {
 	bytesPacketLength := make([]byte, numberOfBytes)
+	_, err := conn.Read(bytesPacketLength)
+	if err != nil {
+		return 0, err
+	}
 	return util.BytesToInt(bytesPacketLength)
 }
