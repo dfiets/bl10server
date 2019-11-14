@@ -57,9 +57,10 @@ func readMessage(conn net.Conn) {
 		} else {
 			packageLength = getLength(conn, 2)
 		}
-
+		log.Println(packageLength)
 		content := make([]byte, packageLength)
 		_, err = conn.Read(content)
+		processContent(content)
 
 		if err != nil {
 			log.Print(err)
