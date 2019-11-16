@@ -14,7 +14,7 @@ type LockStatus struct {
 func ProcessHeartBeat(content []byte) {
 	log.Printf("Lock Status: %#v", convertTerminalInformation(content[1]))
 	log.Printf("Voltage: %d", convertVoltage(content[2:4]))
-	log.Printf("GSM level: %d", content[5])
+	log.Printf("GSM level: %d", content[4])
 }
 
 func GetAckHeartBeat() BL10Packet {
