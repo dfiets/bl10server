@@ -11,6 +11,10 @@ func ProcessLogin(content []byte) {
 	log.Println("Sequence number: ", util.BytesToInt(content[13:15]))
 }
 
+func GetAckLogin() {
+
+}
+
 func convertBytesToIMEI(imeiBytes []byte) string {
 	imei := ""
 	for index, imeiByte := range imeiBytes {
