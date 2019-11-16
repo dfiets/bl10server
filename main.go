@@ -33,6 +33,7 @@ func startServer() {
 func handleConnection(conn net.Conn) {
 	serialNumber := 0
 	for {
+
 		readMessage(conn, serialNumber)
 	}
 
@@ -108,8 +109,10 @@ func processContent(content []byte) command.BL10Packet {
 		return command.GetAckHeartBeat()
 	case 0x32:
 		log.Println("GPS LOCATION")
+		command.ProcessGPS(content)
 	case 0x33:
 		log.Println("LOCATION INFORMATION")
+		command.ProcessLocationAlarm(content)
 	case 0x80:
 		log.Println("ONLINE COMMAND")
 	case 0x98:
