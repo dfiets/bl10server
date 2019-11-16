@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 )
 
 func main() {
@@ -30,13 +31,14 @@ func startServer() {
 }
 
 func handleConnection(conn net.Conn) {
+	serialNumber := 0
 	for {
-		readMessage(conn)
+		readMessage(conn, serialNumber)
 	}
 
 }
 
-func readMessage(conn net.Conn) {
+func readMessage(conn net.Conn, serialNumber int) int {
 	p := make([]byte, 2)
 	for {
 		_, err := conn.Read(p)
@@ -64,10 +66,17 @@ func readMessage(conn net.Conn) {
 		log.Println(packageLength)
 		content := make([]byte, packageLength)
 		_, err = conn.Read(content)
-		processContent(content)
-
 		if err != nil {
 			log.Print(err)
+		}
+
+		responsePacket := processContent(content)
+		if responsePacket.NotEmpty() {
+			serialNumber += 1
+			_, err := conn.Write(responsePacket.CreatePacket(serialNumber))
+			if err != nil {
+				log.Println(err)
+			}
 		}
 
 		closeBytes := make([]byte, 2)
@@ -78,16 +87,20 @@ func readMessage(conn net.Conn) {
 			log.Println("Something went wrong", closeBytes)
 		}
 	}
+	return serialNumber
 
 }
 
-func processContent(content []byte) {
+func processContent(content []byte) command.BL10Packet {
 	switch content[0] {
 	case 0x01:
 		log.Println("LOGIN")
 		command.ProcessLogin(content)
+		return command.GetAckLogin(time.Now().UTC())
 	case 0x23:
-		log.Println("ONLINE COMMAND RESPONSE")
+		log.Println("HEARTBEAT")
+		command.ProcessHeartBeat(content)
+		return command.GetAckHeartBeat()
 	case 0x32:
 		log.Println("GPS LOCATION")
 	case 0x33:
@@ -99,6 +112,7 @@ func processContent(content []byte) {
 	default:
 		log.Println("UNKNOWN protocolnumber: ERROR!!!")
 	}
+	return command.BL10Packet{}
 }
 
 func getLength(conn net.Conn, numberOfBytes int) (int, error) {

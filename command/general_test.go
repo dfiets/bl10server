@@ -2,7 +2,6 @@ package command
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 )
 
@@ -15,14 +14,11 @@ func TestBL10CreatePacket(t *testing.T) {
 	serialNumber := 57
 	input := BL10Packet{
 		protocolNumber: protocolNumber,
-		serialNumber:   serialNumber,
 		content:        contentBytes,
 	}
 
-	result := input.CreatePacket()
+	result := input.CreatePacket(serialNumber)
 
-	fmt.Printf("%s", result)
-	fmt.Printf("%s", expectedOutput)
 	if !bytes.Equal(result, expectedOutput) {
 		t.Errorf("CreatePacket was incorrect, got: % x, want: % x.", result, expectedOutput)
 	}

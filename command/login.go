@@ -4,6 +4,7 @@ import (
 	"bl10server/util"
 	"log"
 	"strconv"
+	"time"
 )
 
 func ProcessLogin(content []byte) {
@@ -11,7 +12,15 @@ func ProcessLogin(content []byte) {
 	log.Println("Sequence number: ", util.BytesToInt(content[13:15]))
 }
 
-func GetAckLogin() {
+func GetAckLogin(now time.Time) BL10Packet {
+	content := []byte{byte(now.Year() - 2000), byte(now.Month()), byte(now.Day()),
+		byte(now.Hour()), byte(now.Minute()), byte(now.Second()), 0x00}
+
+	packet := BL10Packet{
+		protocolNumber: 0x01,
+		content:        content,
+	}
+	return packet
 
 }
 

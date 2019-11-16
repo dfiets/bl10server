@@ -9,10 +9,9 @@ import (
 type BL10Packet struct {
 	protocolNumber byte
 	content        []byte
-	serialNumber   int
 }
 
-func (packet BL10Packet) CreatePacket() []byte {
+func (packet BL10Packet) CreatePacket(serialNumber int) []byte {
 	length := 1 + len(packet.content) + 2 + 2
 
 	bPacketLength := make([]byte, 2)
@@ -31,7 +30,7 @@ func (packet BL10Packet) CreatePacket() []byte {
 	msg = append(msg, packet.content...)
 
 	bSerialNumber := make([]byte, 2)
-	binary.BigEndian.PutUint16(bSerialNumber, uint16(packet.serialNumber))
+	binary.BigEndian.PutUint16(bSerialNumber, uint16(serialNumber))
 	msg = append(msg, bSerialNumber...)
 
 	// All bytes except start bytes and stop bytes
@@ -40,4 +39,8 @@ func (packet BL10Packet) CreatePacket() []byte {
 	msg = append(msg, []byte{0x0D, 0x0A}...)
 
 	return msg
+}
+
+func (packet BL10Packet) NotEmpty() bool {
+	return packet.protocolNumber != 0x00
 }
