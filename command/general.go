@@ -44,3 +44,7 @@ func (packet BL10Packet) CreatePacket(serialNumber int) []byte {
 func (packet BL10Packet) NotEmpty() bool {
 	return packet.protocolNumber != 0x00
 }
+
+func (packet BL10Packet) GetProtocolNumber() byte {
+	return packet.protocolNumber
+}

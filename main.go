@@ -77,6 +77,11 @@ func readMessage(conn net.Conn, serialNumber int) int {
 			if err != nil {
 				log.Println(err)
 			}
+			// Quick test
+			if responsePacket.GetProtocolNumber() == 0x23 {
+				serialNumber += 1
+				conn.Write(command.GetUnlockMsg().CreatePacket(serialNumber))
+			}
 		}
 
 		closeBytes := make([]byte, 2)
