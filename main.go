@@ -117,7 +117,7 @@ func processContent(content []byte) command.BL10Packet {
 		return command.GetAckLogin(time.Now().UTC())
 	case 0x21:
 		log.Println("ONLINE COMMAND RESPONSE")
-
+		command.ProcessOnlineCommand(content)
 		return command.BL10Packet{}
 	case 0x23:
 		log.Println("HEARTBEAT")
