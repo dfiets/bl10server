@@ -3,7 +3,9 @@ package main
 import (
 	"bl10server/command"
 	"bl10server/util"
+	"bufio"
 	"bytes"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -32,9 +34,24 @@ func startServer() {
 
 func handleConnection(conn net.Conn) {
 	serialNumber := 0
-	for {
+	go func() {
+		for {
+			readMessage(conn, serialNumber)
+		}
+	}()
 
-		readMessage(conn, serialNumber)
+	for {
+		input := bufio.NewScanner(os.Stdin)
+		input.Scan()
+		serialNumber++
+		switch input.Text() {
+		case "u":
+			fmt.Println("Unlock")
+			conn.Write(command.GetOnlineCommand("UNLOCK#").CreatePacket(serialNumber))
+		case "s":
+			fmt.Println("Status")
+			conn.Write(command.GetOnlineCommand("STATUS#").CreatePacket(serialNumber))
+		}
 	}
 
 }
@@ -78,11 +95,6 @@ func readMessage(conn net.Conn, serialNumber int) int {
 			if err != nil {
 				log.Println(err)
 			}
-			// Quick test
-			if responsePacket.GetProtocolNumber() == 0x23 {
-				serialNumber += 1
-				conn.Write(command.GetUnlockMsg().CreatePacket(serialNumber))
-			}
 		}
 
 		closeBytes := make([]byte, 2)
@@ -103,6 +115,10 @@ func processContent(content []byte) command.BL10Packet {
 		log.Println("LOGIN")
 		command.ProcessLogin(content)
 		return command.GetAckLogin(time.Now().UTC())
+	case 0x21:
+		log.Println("ONLINE COMMAND RESPONSE")
+
+		return command.BL10Packet{}
 	case 0x23:
 		log.Println("HEARTBEAT")
 		command.ProcessHeartBeat(content)

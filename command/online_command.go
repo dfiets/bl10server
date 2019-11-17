@@ -1,9 +1,15 @@
 package command
 
-func GetUnlockMsg() BL10Packet {
+import "log"
+
+func ProcessOnlineCommand(content []byte) {
+	onlineCommandResponse := string(content[6:])
+	log.Println(onlineCommandResponse)
+}
+
+func GetOnlineCommand(cmd string) BL10Packet {
 	result := BL10Packet{}
 
-	cmd := "UNLOCK#"
 	result.protocolNumber = 0x80
 	result.content = convertOnlineCommandContent(cmd)
 	return result
