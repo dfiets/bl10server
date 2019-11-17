@@ -80,6 +80,7 @@ func readMessage(conn net.Conn, serialNumber int) int {
 		if err != nil {
 			log.Print(err)
 		}
+		packageLength = packageLength - 4
 
 		log.Println(packageLength)
 		content := make([]byte, packageLength)
@@ -96,6 +97,11 @@ func readMessage(conn net.Conn, serialNumber int) int {
 				log.Println(err)
 			}
 		}
+
+		serialNumberBytes := make([]byte, 2)
+		_, err = conn.Read(serialNumberBytes)
+		errorCheckBytes := make([]byte, 2)
+		_, err = conn.Read(errorCheckBytes)
 
 		closeBytes := make([]byte, 2)
 		_, err = conn.Read(closeBytes)
