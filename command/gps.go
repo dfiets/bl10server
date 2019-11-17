@@ -29,7 +29,7 @@ func processLocation(content []byte) int {
 
 	log.Printf("GPS_INFORMATION %d", content[6])
 	log.Printf("Number of satelites %d", content[7])
-	if content[0] != 0x0 {
+	if content[6] != 0x0 {
 		log.Println(util.BytesToInt(content[8:12]))
 		latitude := float64(util.BytesToInt(content[8:12])) / 1800000
 		log.Println(util.BytesToInt(content[12:16]))
