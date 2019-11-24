@@ -33,85 +33,99 @@ func startServer() {
 }
 
 func handleConnection(conn net.Conn) {
-	serialNumber := 0
+	ch := make(chan command.BL10Packet)
 	go func() {
+
 		for {
-			readMessage(conn, serialNumber)
+			log.Println("New message.")
+			err := readMessage(conn, ch)
+			if err != nil {
+				log.Println("ERROR IN READ GOROUTINE")
+				log.Println(err)
+				return
+			}
+		}
+	}()
+
+	go func() {
+		serialNumber := 0
+		for {
+			responsePacket := <-ch
+			_, err := conn.Write(responsePacket.CreatePacket(serialNumber))
+			if err != nil {
+				log.Println("ERROR IN WRITE GOROUTINE")
+				log.Println(err)
+				return
+			}
 		}
 	}()
 
 	for {
 		input := bufio.NewScanner(os.Stdin)
 		input.Scan()
-		serialNumber++
 		switch input.Text() {
 		case "u":
 			fmt.Println("Unlock")
-			conn.Write(command.GetOnlineCommand("UNLOCK#").CreatePacket(serialNumber))
+			ch <- command.GetOnlineCommand("UNLOCK#")
+
 		case "s":
 			fmt.Println("Status")
-			conn.Write(command.GetOnlineCommand("STATUS#").CreatePacket(serialNumber))
+			ch <- command.GetOnlineCommand("STATUS#")
 		}
 	}
 
 }
 
-func readMessage(conn net.Conn, serialNumber int) int {
+func readMessage(conn net.Conn, ch chan command.BL10Packet) error {
 	p := make([]byte, 2)
-	for {
-		_, err := conn.Read(p)
+	_, err := conn.Read(p)
 
-		if err != nil {
-			log.Println(err)
-			os.Exit(1)
-		}
-
-		packageLength := 0
-		packetLengthOneByte := bytes.Equal(p, []byte{0x78, 0x78})
-		packetLengthTwoBytes := bytes.Equal(p, []byte{0x79, 0x79})
-
-		if !(packetLengthOneByte || packetLengthTwoBytes) {
-			continue
-		} else if packetLengthOneByte {
-			packageLength, err = getLength(conn, 1)
-		} else {
-			packageLength, err = getLength(conn, 2)
-		}
-		if err != nil {
-			log.Print(err)
-		}
-		packageLength = packageLength - 4
-
-		log.Println(packageLength)
-		content := make([]byte, packageLength)
-		_, err = conn.Read(content)
-		if err != nil {
-			log.Print(err)
-		}
-
-		responsePacket := processContent(content)
-		if responsePacket.NotEmpty() {
-			serialNumber += 1
-			_, err := conn.Write(responsePacket.CreatePacket(serialNumber))
-			if err != nil {
-				log.Println(err)
-			}
-		}
-
-		serialNumberBytes := make([]byte, 2)
-		_, err = conn.Read(serialNumberBytes)
-		errorCheckBytes := make([]byte, 2)
-		_, err = conn.Read(errorCheckBytes)
-
-		closeBytes := make([]byte, 2)
-		_, err = conn.Read(closeBytes)
-		if bytes.Equal(closeBytes, []byte{0x0D, 0x0A}) {
-			log.Println("closeBytes")
-		} else {
-			log.Println("Something went wrong", closeBytes)
-		}
+	if err != nil {
+		return err
 	}
-	return serialNumber
+
+	packageLength := 0
+	packetLengthOneByte := bytes.Equal(p, []byte{0x78, 0x78})
+	packetLengthTwoBytes := bytes.Equal(p, []byte{0x79, 0x79})
+
+	if !(packetLengthOneByte || packetLengthTwoBytes) {
+		return nil
+	} else if packetLengthOneByte {
+		packageLength, err = getLength(conn, 1)
+	} else {
+		packageLength, err = getLength(conn, 2)
+	}
+	if err != nil {
+		log.Print(err)
+	}
+	packageLength = packageLength - 4
+
+	log.Println(packageLength)
+	content := make([]byte, packageLength)
+	_, err = conn.Read(content)
+	if err != nil {
+		log.Print(err)
+	}
+
+	responsePacket := processContent(content)
+	if responsePacket.NotEmpty() {
+		ch <- responsePacket
+	}
+
+	serialNumberBytes := make([]byte, 2)
+	_, err = conn.Read(serialNumberBytes)
+	errorCheckBytes := make([]byte, 2)
+	_, err = conn.Read(errorCheckBytes)
+
+	closeBytes := make([]byte, 2)
+	_, err = conn.Read(closeBytes)
+	if bytes.Equal(closeBytes, []byte{0x0D, 0x0A}) {
+		log.Println("closeBytes")
+	} else {
+		log.Println("Something went wrong", closeBytes)
+	}
+
+	return nil
 
 }
 
@@ -135,10 +149,9 @@ func processContent(content []byte) command.BL10Packet {
 	case 0x33:
 		log.Println("LOCATION INFORMATION")
 		command.ProcessLocationAlarm(content)
-	case 0x80:
-		log.Println("ONLINE COMMAND")
 	case 0x98:
 		log.Println("INFORMATION TRANSMISSION PACKET")
+		return command.GetAckInformationTransmision()
 	default:
 		log.Println("UNKNOWN protocolnumber: ERROR!!!")
 	}
