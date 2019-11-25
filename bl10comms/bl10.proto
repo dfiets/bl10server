@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+service BL10Lock {
+        rpc Unlock(Lock) returns (LockStatus) {}
+}
+
+message Lock {
+        string imei = 1;
+}
+
+message LockStatus {
+        string imei = 1;
+        bool gps_enabled = 2;
+        bool is_charching = 3;
+        bool is_locked = 4;
+        Position location = 5;
+
+}
+
+message Position {
+        float latitude = 1; // WGS 84
+        float longitude = 2; // WGS 84
+        float accuracy = 3;
+}
