@@ -3,18 +3,16 @@ package main
 import (
 	"bl10server/command"
 	"bl10server/util"
-	"bufio"
 	"bytes"
-	"fmt"
 	"log"
 	"net"
-	"os"
 	"time"
 )
 
 func main() {
 	log.Println("started")
-	startServer()
+	go startServer()
+	startGrpcServer()
 }
 
 func startServer() {
@@ -60,19 +58,19 @@ func handleConnection(conn net.Conn) {
 		}
 	}()
 
-	for {
-		input := bufio.NewScanner(os.Stdin)
-		input.Scan()
-		switch input.Text() {
-		case "u":
-			fmt.Println("Unlock")
-			ch <- command.GetOnlineCommand("UNLOCK#")
+	// for {
+	// 	input := bufio.NewScanner(os.Stdin)
+	// 	input.Scan()
+	// 	switch input.Text() {
+	// 	case "u":
+	// 		fmt.Println("Unlock")
+	// 		ch <- command.GetOnlineCommand("UNLOCK#")
 
-		case "s":
-			fmt.Println("Status")
-			ch <- command.GetOnlineCommand("STATUS#")
-		}
-	}
+	// 	case "s":
+	// 		fmt.Println("Status")
+	// 		ch <- command.GetOnlineCommand("STATUS#")
+	// 	}
+	// }
 
 }
 
