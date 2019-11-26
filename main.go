@@ -79,6 +79,7 @@ func startServer() {
 			connectCh: confirmCh,
 			connID:    connectionID,
 		}
+		connections[connectionID] = bl10conn
 		go bl10conn.handleConnection()
 		connectionID++
 	}
