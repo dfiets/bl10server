@@ -4,6 +4,7 @@ import (
 	"bl10server/command"
 	"bl10server/util"
 	"bytes"
+	"errors"
 	"log"
 	"net"
 	"time"
@@ -11,32 +12,85 @@ import (
 
 func main() {
 	log.Println("started")
+
 	go startServer()
 	startGrpcServer()
 }
 
+var connections = map[int]bl10Connection{}
+var imeiToConnection = map[string]int{}
+
+type bl10Connection struct {
+	conn      net.Conn
+	commandCh chan command.BL10Packet
+	connectCh chan confirmConnection
+	connID    int
+}
+
+type confirmConnection struct {
+	connID int
+	imei   string
+}
+
+func Unlock(imei string) error {
+	val, ok := imeiToConnection[imei]
+	if !ok {
+		return errors.New("This lock is not registered.")
+	}
+
+	bl10Connection, ok := connections[val]
+	if !ok {
+		return errors.New("Connection doesn't exist anymore.")
+	}
+	bl10Connection.commandCh <- command.GetOnlineCommand("UNLOCK#")
+	return nil
+
+}
+
 func startServer() {
 	ln, err := net.Listen("tcp", ":9020")
+	connectionID := 1
 	if err != nil {
 		log.Print(err)
 	}
+	confirmCh := make(chan confirmConnection)
+
+	go func() {
+		for {
+			confirmedConnection := <-confirmCh
+			val, ok := imeiToConnection[confirmedConnection.imei]
+			if ok {
+				delete(connections, val)
+			}
+			imeiToConnection[confirmedConnection.imei] = confirmedConnection.connID
+			log.Println("registered imei: ", confirmedConnection.imei)
+		}
+	}()
 
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			log.Print(err)
 		}
-		go handleConnection(conn)
+		ch := make(chan command.BL10Packet)
+		bl10conn := bl10Connection{
+			conn:      conn,
+			commandCh: ch,
+			connectCh: confirmCh,
+			connID:    connectionID,
+		}
+		go bl10conn.handleConnection()
+		connectionID++
 	}
 }
 
-func handleConnection(conn net.Conn) {
-	ch := make(chan command.BL10Packet)
+func (bl10conn bl10Connection) handleConnection() {
+	stop := make(chan bool)
 	go func() {
 
 		for {
 			log.Println("New message.")
-			err := readMessage(conn, ch)
+			err := bl10conn.readMessage()
 			if err != nil {
 				log.Println("ERROR IN READ GOROUTINE")
 				log.Println(err)
@@ -48,12 +102,18 @@ func handleConnection(conn net.Conn) {
 	go func() {
 		serialNumber := 0
 		for {
-			responsePacket := <-ch
-			_, err := conn.Write(responsePacket.CreatePacket(serialNumber))
-			if err != nil {
-				log.Println("ERROR IN WRITE GOROUTINE")
-				log.Println(err)
-				return
+			select {
+			case responsePacket := <-bl10conn.commandCh:
+				_, err := bl10conn.conn.Write(responsePacket.CreatePacket(serialNumber))
+				if err != nil {
+					log.Println("ERROR IN WRITE GOROUTINE")
+					log.Println(err)
+					return
+				}
+			case stopNow := <-stop:
+				if stopNow {
+					return
+				}
 			}
 		}
 	}()
@@ -74,7 +134,8 @@ func handleConnection(conn net.Conn) {
 
 }
 
-func readMessage(conn net.Conn, ch chan command.BL10Packet) error {
+func (bl10conn bl10Connection) readMessage() error {
+	conn := bl10conn.conn
 	p := make([]byte, 2)
 	_, err := conn.Read(p)
 
@@ -105,9 +166,9 @@ func readMessage(conn net.Conn, ch chan command.BL10Packet) error {
 		log.Print(err)
 	}
 
-	responsePacket := processContent(content)
+	responsePacket := bl10conn.processContent(content)
 	if responsePacket.NotEmpty() {
-		ch <- responsePacket
+		bl10conn.commandCh <- responsePacket
 	}
 
 	serialNumberBytes := make([]byte, 2)
@@ -127,11 +188,12 @@ func readMessage(conn net.Conn, ch chan command.BL10Packet) error {
 
 }
 
-func processContent(content []byte) command.BL10Packet {
+func (bl10conn bl10Connection) processContent(content []byte) command.BL10Packet {
 	switch content[0] {
 	case 0x01:
 		log.Println("LOGIN")
-		command.ProcessLogin(content)
+		imei := command.ProcessLogin(content)
+		bl10conn.connectCh <- confirmConnection{connID: bl10conn.connID, imei: imei}
 		return command.GetAckLogin(time.Now().UTC())
 	case 0x21:
 		log.Println("ONLINE COMMAND RESPONSE")

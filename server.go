@@ -15,6 +15,10 @@ type bl10LockServer struct {
 }
 
 func (s *bl10LockServer) Unlock(ctx context.Context, lock *bl10.Lock) (*bl10.LockStatus, error) {
+	err := Unlock(lock.GetImei())
+	if err != nil {
+		return nil, err
+	}
 
 	// No feature was found, return an unnamed feature
 	return &bl10.LockStatus{IsCharching: true, IsLocked: true, Imei: lock.GetImei()}, nil

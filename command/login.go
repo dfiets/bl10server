@@ -6,8 +6,9 @@ import (
 	"time"
 )
 
-func ProcessLogin(content []byte) {
+func ProcessLogin(content []byte) string {
 	log.Println("IMEI ", convertBytesToIMEI(content[1:9]))
+	return convertBytesToIMEI(content[1:9])
 }
 
 func GetAckLogin(now time.Time) BL10Packet {
