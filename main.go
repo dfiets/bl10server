@@ -42,7 +42,9 @@ func Unlock(imei string) error {
 	if !ok {
 		return errors.New("Connection doesn't exist anymore.")
 	}
-	bl10Connection.commandCh <- command.GetOnlineCommand("UNLOCK#")
+	bl10Connection.commandCh <- command.GetOnlineCommand("SDFIND,ON,5,15,1#")
+	bl10Connection.commandCh <- command.GetOnlineCommand("WIFION,30#")
+	bl10Connection.commandCh <- command.GetOnlineCommand("LJDW#")
 	return nil
 
 }
@@ -210,6 +212,9 @@ func (bl10conn bl10Connection) processContent(content []byte) command.BL10Packet
 	case 0x33:
 		log.Println("LOCATION INFORMATION")
 		command.ProcessLocationAlarm(content)
+	case 0x2C:
+		log.Println("WIFI")
+		log.Println(content)
 	case 0x98:
 		log.Println("INFORMATION TRANSMISSION PACKET")
 		return command.GetAckInformationTransmision()
