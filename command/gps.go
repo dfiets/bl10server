@@ -30,8 +30,7 @@ func processLocation(content []byte, isAlarm bool) int {
 	log.Printf("timestamp %s", timestamp)
 
 	log.Printf("GPS_INFORMATION %d", content[6])
-	log.Printf("Number of satelites %d", content[7])
-	startIndex := 8
+	startIndex := 7
 	if content[6] != 0x0 {
 		endIndex := startIndex + int(content[6])
 		processGpsInformation(content[startIndex:endIndex])
@@ -54,6 +53,7 @@ func processLocation(content []byte, isAlarm bool) int {
 
 	wifiMessageLength := int(content[startIndex])
 	startIndex++
+	println(len(content))
 	if wifiMessageLength > 0 {
 		endIndex := startIndex + 7*wifiMessageLength
 		processWifiMessage(content[startIndex:endIndex], wifiMessageLength)
@@ -74,11 +74,12 @@ func processGpsInformation(data []byte) {
 	if len(data) != 12 {
 		log.Printf("processGpsInformation data length not long enough, length is %d.", len(data))
 		return
-	}
-	log.Println(util.BytesToInt(data[0:4]))
-	latitude := float64(util.BytesToInt(data[0:4])) / 1800000
-	log.Println(util.BytesToInt(data[4:8]))
-	longitude := float64(util.BytesToInt(data[4:8])) / 18000000
+	}	
+	log.Printf("Number of satelites %d", data[0])
+	log.Println(util.BytesToInt(data[1:5]))
+	latitude := float64(util.BytesToInt(data[1:5])) / 1800000
+	log.Println(util.BytesToInt(data[5:9]))
+	longitude := float64(util.BytesToInt(data[5:9])) / 18000000
 	log.Printf("Location %.7f,%.7f", latitude, longitude)
 }
 
@@ -91,7 +92,7 @@ func processBaseStationInformation(data []byte) {
 	log.Println(util.BytesToInt(data[0:2]))
 	log.Printf("MNC %d", data[2])
 	log.Printf("LAC %d", util.BytesToInt(data[3:5]))
-	log.Printf("CelltowerID", util.BytesToInt(data[5:8]))
+	log.Printf("CelltowerID, %d", util.BytesToInt(data[5:8]))
 	log.Printf("RSSI: %d", data[8])
 }
 
