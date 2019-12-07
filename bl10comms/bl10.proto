@@ -3,6 +3,8 @@ import "google/protobuf/empty.proto";
 
 service BL10Lock {
         rpc Unlock(Lock) returns (LockStatus) {}
+        rpc Alarm(Lock) returns (LockStatus) {}
+        rpc Locate(Lock) returns (LockStatus) {}
         rpc StatusUpdates(google.protobuf.Empty) returns (stream LockStatus);
 }
 

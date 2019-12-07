@@ -32,21 +32,20 @@ type confirmConnection struct {
 	imei   string
 }
 
-func Unlock(imei string) error {
+// SendCommandToLock this function will try to lookup the lock
+// and send a command to that lock.
+func SendCommandToLock(imei string, commandStr string) error {
 	val, ok := imeiToConnection[imei]
 	if !ok {
-		return errors.New("This lock is not registered.")
+		return errors.New("This lock is not registered")
 	}
 
 	bl10Connection, ok := connections[val]
 	if !ok {
-		return errors.New("Connection doesn't exist anymore.")
+		return errors.New("Connection doesn't exist anymore")
 	}
-	bl10Connection.commandCh <- command.GetOnlineCommand("SDFIND,ON,5,15,1#")
-	bl10Connection.commandCh <- command.GetOnlineCommand("WIFION,30#")
-	bl10Connection.commandCh <- command.GetOnlineCommand("LJDW#")
+	bl10Connection.commandCh <- command.GetOnlineCommand(commandStr)
 	return nil
-
 }
 
 func startServer() {
