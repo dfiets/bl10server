@@ -43,7 +43,7 @@ message LocationPacket {
 message PositionPackage {
         float latitude = 1; // WGS 84
         float longitude = 2; // WGS 84
-        float accuracy = 3;
+        int32 number_of_satelites = 3;
         int32 course = 4;
         float speed = 5;
 }

@@ -17,7 +17,7 @@ func main() {
 	startGrpcServer()
 }
 
-var connections = map[int]bl10Connection{}
+var lockConnections = map[int]bl10Connection{}
 var imeiToConnection = map[string]int{}
 
 type bl10Connection struct {
@@ -40,7 +40,7 @@ func SendCommandToLock(imei string, commandStr string) error {
 		return errors.New("This lock is not registered")
 	}
 
-	bl10Connection, ok := connections[val]
+	bl10Connection, ok := lockConnections[val]
 	if !ok {
 		return errors.New("Connection doesn't exist anymore")
 	}
@@ -61,7 +61,7 @@ func startServer() {
 			confirmedConnection := <-confirmCh
 			val, ok := imeiToConnection[confirmedConnection.imei]
 			if ok {
-				delete(connections, val)
+				delete(lockConnections, val)
 			}
 			imeiToConnection[confirmedConnection.imei] = confirmedConnection.connID
 			log.Println("registered imei: ", confirmedConnection.imei)
@@ -80,7 +80,7 @@ func startServer() {
 			connectCh: confirmCh,
 			connID:    connectionID,
 		}
-		connections[connectionID] = bl10conn
+		lockConnections[connectionID] = bl10conn
 		go bl10conn.handleConnection()
 		connectionID++
 	}
