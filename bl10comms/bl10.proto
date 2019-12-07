@@ -1,7 +1,9 @@
 syntax = "proto3";
+import "google/protobuf/empty.proto";
 
 service BL10Lock {
         rpc Unlock(Lock) returns (LockStatus) {}
+        rpc StatusUpdates(google.protobuf.Empty) returns (stream LockStatus);
 }
 
 message Lock {
@@ -9,16 +11,45 @@ message Lock {
 }
 
 message LockStatus {
-        string imei = 1;
-        bool gps_enabled = 2;
-        bool is_charching = 3;
-        bool is_locked = 4;
-        Position location = 5;
-
+        int64 timestamp = 1;
+        string imei = 2;
+        bool gps_enabled = 3;
+        bool is_charching = 4;
+        bool is_locked = 5;
+        LocationPacket location_packet = 6;
 }
 
-message Position {
+message LocationPacket {
+        int64 lock_timestamp = 1;
+        PositionPackage location = 2;
+        enum Status {
+                TIMING_REPORT = 0;
+                FIXED_DISTANCE_REPORT  = 1;
+                GPS_REUPLOAD = 2;
+                LJDW_REPORT = 3;
+                LOCK_REPORT = 4;
+                UNLOCK_REPORT = 5;
+                LOW_INTERNAL_BATTERY_ALARM = 6;
+                LOW_BATTERY_SHUTDOWN = 7;
+                ABNORMAL_ALARM = 8;
+                ABNORMAL_UNLOCKING_ALARM = 9;                
+        }
+        Status status = 3;
+        BaseStation base_station = 4;
+}
+
+message PositionPackage {
         float latitude = 1; // WGS 84
         float longitude = 2; // WGS 84
         float accuracy = 3;
+        int32 course = 4;
+        float speed = 5;
+}
+
+message BaseStation {
+        int32 mcc = 1;
+        int32 mnc = 2;
+        int32 lac = 3;
+        int32 ci = 4;
+        int32 rssi =5 ; 
 }

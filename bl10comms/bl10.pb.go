@@ -7,6 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -23,6 +24,55 @@ var _ = math.Inf
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+
+type LocationPacket_Status int32
+
+const (
+	LocationPacket_TIMING_REPORT              LocationPacket_Status = 0
+	LocationPacket_FIXED_DISTANCE_REPORT      LocationPacket_Status = 1
+	LocationPacket_GPS_REUPLOAD               LocationPacket_Status = 2
+	LocationPacket_LJDW_REPORT                LocationPacket_Status = 3
+	LocationPacket_LOCK_REPORT                LocationPacket_Status = 4
+	LocationPacket_UNLOCK_REPORT              LocationPacket_Status = 5
+	LocationPacket_LOW_INTERNAL_BATTERY_ALARM LocationPacket_Status = 6
+	LocationPacket_LOW_BATTERY_SHUTDOWN       LocationPacket_Status = 7
+	LocationPacket_ABNORMAL_ALARM             LocationPacket_Status = 8
+	LocationPacket_ABNORMAL_UNLOCKING_ALARM   LocationPacket_Status = 9
+)
+
+var LocationPacket_Status_name = map[int32]string{
+	0: "TIMING_REPORT",
+	1: "FIXED_DISTANCE_REPORT",
+	2: "GPS_REUPLOAD",
+	3: "LJDW_REPORT",
+	4: "LOCK_REPORT",
+	5: "UNLOCK_REPORT",
+	6: "LOW_INTERNAL_BATTERY_ALARM",
+	7: "LOW_BATTERY_SHUTDOWN",
+	8: "ABNORMAL_ALARM",
+	9: "ABNORMAL_UNLOCKING_ALARM",
+}
+
+var LocationPacket_Status_value = map[string]int32{
+	"TIMING_REPORT":              0,
+	"FIXED_DISTANCE_REPORT":      1,
+	"GPS_REUPLOAD":               2,
+	"LJDW_REPORT":                3,
+	"LOCK_REPORT":                4,
+	"UNLOCK_REPORT":              5,
+	"LOW_INTERNAL_BATTERY_ALARM": 6,
+	"LOW_BATTERY_SHUTDOWN":       7,
+	"ABNORMAL_ALARM":             8,
+	"ABNORMAL_UNLOCKING_ALARM":   9,
+}
+
+func (x LocationPacket_Status) String() string {
+	return proto.EnumName(LocationPacket_Status_name, int32(x))
+}
+
+func (LocationPacket_Status) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_7cb77491feb77e2e, []int{2, 0}
+}
 
 type Lock struct {
 	Imei                 string   `protobuf:"bytes,1,opt,name=imei,proto3" json:"imei,omitempty"`
@@ -64,14 +114,15 @@ func (m *Lock) GetImei() string {
 }
 
 type LockStatus struct {
-	Imei                 string    `protobuf:"bytes,1,opt,name=imei,proto3" json:"imei,omitempty"`
-	GpsEnabled           bool      `protobuf:"varint,2,opt,name=gps_enabled,json=gpsEnabled,proto3" json:"gps_enabled,omitempty"`
-	IsCharching          bool      `protobuf:"varint,3,opt,name=is_charching,json=isCharching,proto3" json:"is_charching,omitempty"`
-	IsLocked             bool      `protobuf:"varint,4,opt,name=is_locked,json=isLocked,proto3" json:"is_locked,omitempty"`
-	Location             *Position `protobuf:"bytes,5,opt,name=location,proto3" json:"location,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+	Timestamp            int64           `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Imei                 string          `protobuf:"bytes,2,opt,name=imei,proto3" json:"imei,omitempty"`
+	GpsEnabled           bool            `protobuf:"varint,3,opt,name=gps_enabled,json=gpsEnabled,proto3" json:"gps_enabled,omitempty"`
+	IsCharching          bool            `protobuf:"varint,4,opt,name=is_charching,json=isCharching,proto3" json:"is_charching,omitempty"`
+	IsLocked             bool            `protobuf:"varint,5,opt,name=is_locked,json=isLocked,proto3" json:"is_locked,omitempty"`
+	LocationPacket       *LocationPacket `protobuf:"bytes,6,opt,name=location_packet,json=locationPacket,proto3" json:"location_packet,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
 }
 
 func (m *LockStatus) Reset()         { *m = LockStatus{} }
@@ -98,6 +149,13 @@ func (m *LockStatus) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_LockStatus proto.InternalMessageInfo
+
+func (m *LockStatus) GetTimestamp() int64 {
+	if m != nil {
+		return m.Timestamp
+	}
+	return 0
+}
 
 func (m *LockStatus) GetImei() string {
 	if m != nil {
@@ -127,95 +185,272 @@ func (m *LockStatus) GetIsLocked() bool {
 	return false
 }
 
-func (m *LockStatus) GetLocation() *Position {
+func (m *LockStatus) GetLocationPacket() *LocationPacket {
+	if m != nil {
+		return m.LocationPacket
+	}
+	return nil
+}
+
+type LocationPacket struct {
+	LockTimestamp        int64                 `protobuf:"varint,1,opt,name=lock_timestamp,json=lockTimestamp,proto3" json:"lock_timestamp,omitempty"`
+	Location             *PositionPackage      `protobuf:"bytes,2,opt,name=location,proto3" json:"location,omitempty"`
+	Status               LocationPacket_Status `protobuf:"varint,3,opt,name=status,proto3,enum=LocationPacket_Status" json:"status,omitempty"`
+	BaseStation          *BaseStation          `protobuf:"bytes,4,opt,name=base_station,json=baseStation,proto3" json:"base_station,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
+	XXX_unrecognized     []byte                `json:"-"`
+	XXX_sizecache        int32                 `json:"-"`
+}
+
+func (m *LocationPacket) Reset()         { *m = LocationPacket{} }
+func (m *LocationPacket) String() string { return proto.CompactTextString(m) }
+func (*LocationPacket) ProtoMessage()    {}
+func (*LocationPacket) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7cb77491feb77e2e, []int{2}
+}
+
+func (m *LocationPacket) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LocationPacket.Unmarshal(m, b)
+}
+func (m *LocationPacket) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LocationPacket.Marshal(b, m, deterministic)
+}
+func (m *LocationPacket) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocationPacket.Merge(m, src)
+}
+func (m *LocationPacket) XXX_Size() int {
+	return xxx_messageInfo_LocationPacket.Size(m)
+}
+func (m *LocationPacket) XXX_DiscardUnknown() {
+	xxx_messageInfo_LocationPacket.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LocationPacket proto.InternalMessageInfo
+
+func (m *LocationPacket) GetLockTimestamp() int64 {
+	if m != nil {
+		return m.LockTimestamp
+	}
+	return 0
+}
+
+func (m *LocationPacket) GetLocation() *PositionPackage {
 	if m != nil {
 		return m.Location
 	}
 	return nil
 }
 
-type Position struct {
+func (m *LocationPacket) GetStatus() LocationPacket_Status {
+	if m != nil {
+		return m.Status
+	}
+	return LocationPacket_TIMING_REPORT
+}
+
+func (m *LocationPacket) GetBaseStation() *BaseStation {
+	if m != nil {
+		return m.BaseStation
+	}
+	return nil
+}
+
+type PositionPackage struct {
 	Latitude             float32  `protobuf:"fixed32,1,opt,name=latitude,proto3" json:"latitude,omitempty"`
 	Longitude            float32  `protobuf:"fixed32,2,opt,name=longitude,proto3" json:"longitude,omitempty"`
 	Accuracy             float32  `protobuf:"fixed32,3,opt,name=accuracy,proto3" json:"accuracy,omitempty"`
+	Course               int32    `protobuf:"varint,4,opt,name=course,proto3" json:"course,omitempty"`
+	Speed                float32  `protobuf:"fixed32,5,opt,name=speed,proto3" json:"speed,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Position) Reset()         { *m = Position{} }
-func (m *Position) String() string { return proto.CompactTextString(m) }
-func (*Position) ProtoMessage()    {}
-func (*Position) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7cb77491feb77e2e, []int{2}
+func (m *PositionPackage) Reset()         { *m = PositionPackage{} }
+func (m *PositionPackage) String() string { return proto.CompactTextString(m) }
+func (*PositionPackage) ProtoMessage()    {}
+func (*PositionPackage) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7cb77491feb77e2e, []int{3}
 }
 
-func (m *Position) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Position.Unmarshal(m, b)
+func (m *PositionPackage) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PositionPackage.Unmarshal(m, b)
 }
-func (m *Position) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Position.Marshal(b, m, deterministic)
+func (m *PositionPackage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PositionPackage.Marshal(b, m, deterministic)
 }
-func (m *Position) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Position.Merge(m, src)
+func (m *PositionPackage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PositionPackage.Merge(m, src)
 }
-func (m *Position) XXX_Size() int {
-	return xxx_messageInfo_Position.Size(m)
+func (m *PositionPackage) XXX_Size() int {
+	return xxx_messageInfo_PositionPackage.Size(m)
 }
-func (m *Position) XXX_DiscardUnknown() {
-	xxx_messageInfo_Position.DiscardUnknown(m)
+func (m *PositionPackage) XXX_DiscardUnknown() {
+	xxx_messageInfo_PositionPackage.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Position proto.InternalMessageInfo
+var xxx_messageInfo_PositionPackage proto.InternalMessageInfo
 
-func (m *Position) GetLatitude() float32 {
+func (m *PositionPackage) GetLatitude() float32 {
 	if m != nil {
 		return m.Latitude
 	}
 	return 0
 }
 
-func (m *Position) GetLongitude() float32 {
+func (m *PositionPackage) GetLongitude() float32 {
 	if m != nil {
 		return m.Longitude
 	}
 	return 0
 }
 
-func (m *Position) GetAccuracy() float32 {
+func (m *PositionPackage) GetAccuracy() float32 {
 	if m != nil {
 		return m.Accuracy
 	}
 	return 0
 }
 
+func (m *PositionPackage) GetCourse() int32 {
+	if m != nil {
+		return m.Course
+	}
+	return 0
+}
+
+func (m *PositionPackage) GetSpeed() float32 {
+	if m != nil {
+		return m.Speed
+	}
+	return 0
+}
+
+type BaseStation struct {
+	Mcc                  int32    `protobuf:"varint,1,opt,name=mcc,proto3" json:"mcc,omitempty"`
+	Mnc                  int32    `protobuf:"varint,2,opt,name=mnc,proto3" json:"mnc,omitempty"`
+	Lac                  int32    `protobuf:"varint,3,opt,name=lac,proto3" json:"lac,omitempty"`
+	Ci                   int32    `protobuf:"varint,4,opt,name=ci,proto3" json:"ci,omitempty"`
+	Rssi                 int32    `protobuf:"varint,5,opt,name=rssi,proto3" json:"rssi,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *BaseStation) Reset()         { *m = BaseStation{} }
+func (m *BaseStation) String() string { return proto.CompactTextString(m) }
+func (*BaseStation) ProtoMessage()    {}
+func (*BaseStation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7cb77491feb77e2e, []int{4}
+}
+
+func (m *BaseStation) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_BaseStation.Unmarshal(m, b)
+}
+func (m *BaseStation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_BaseStation.Marshal(b, m, deterministic)
+}
+func (m *BaseStation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BaseStation.Merge(m, src)
+}
+func (m *BaseStation) XXX_Size() int {
+	return xxx_messageInfo_BaseStation.Size(m)
+}
+func (m *BaseStation) XXX_DiscardUnknown() {
+	xxx_messageInfo_BaseStation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BaseStation proto.InternalMessageInfo
+
+func (m *BaseStation) GetMcc() int32 {
+	if m != nil {
+		return m.Mcc
+	}
+	return 0
+}
+
+func (m *BaseStation) GetMnc() int32 {
+	if m != nil {
+		return m.Mnc
+	}
+	return 0
+}
+
+func (m *BaseStation) GetLac() int32 {
+	if m != nil {
+		return m.Lac
+	}
+	return 0
+}
+
+func (m *BaseStation) GetCi() int32 {
+	if m != nil {
+		return m.Ci
+	}
+	return 0
+}
+
+func (m *BaseStation) GetRssi() int32 {
+	if m != nil {
+		return m.Rssi
+	}
+	return 0
+}
+
 func init() {
+	proto.RegisterEnum("LocationPacket_Status", LocationPacket_Status_name, LocationPacket_Status_value)
 	proto.RegisterType((*Lock)(nil), "Lock")
 	proto.RegisterType((*LockStatus)(nil), "LockStatus")
-	proto.RegisterType((*Position)(nil), "Position")
+	proto.RegisterType((*LocationPacket)(nil), "LocationPacket")
+	proto.RegisterType((*PositionPackage)(nil), "PositionPackage")
+	proto.RegisterType((*BaseStation)(nil), "BaseStation")
 }
 
 func init() { proto.RegisterFile("bl10.proto", fileDescriptor_7cb77491feb77e2e) }
 
 var fileDescriptor_7cb77491feb77e2e = []byte{
-	// 258 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x90, 0x41, 0x4f, 0x83, 0x30,
-	0x18, 0x86, 0x05, 0xd9, 0x52, 0x3e, 0x3c, 0xf5, 0x44, 0xd0, 0x28, 0x92, 0x98, 0x10, 0x0f, 0x64,
-	0x9b, 0xff, 0x40, 0xe3, 0x8d, 0x83, 0xc1, 0x78, 0xc6, 0x52, 0x1a, 0xf6, 0x65, 0xb5, 0x25, 0xb4,
-	0x1c, 0xfc, 0x47, 0xfe, 0x4c, 0xd3, 0x2e, 0x63, 0x97, 0xdd, 0xfa, 0x3e, 0xcf, 0xd7, 0xe4, 0xcd,
-	0x0b, 0xd0, 0xc9, 0xed, 0xa6, 0x1a, 0x27, 0x6d, 0x75, 0x91, 0x41, 0x54, 0x6b, 0x7e, 0xa0, 0x14,
-	0x22, 0xfc, 0x11, 0x98, 0x06, 0x79, 0x50, 0xc6, 0x8d, 0x7f, 0x17, 0x7f, 0x01, 0x80, 0x93, 0x9f,
-	0x96, 0xd9, 0xd9, 0x5c, 0x3a, 0xa1, 0x0f, 0x90, 0x0c, 0xa3, 0x69, 0x85, 0x62, 0x9d, 0x14, 0x7d,
-	0x1a, 0xe6, 0x41, 0x49, 0x1a, 0x18, 0x46, 0xf3, 0x7e, 0x24, 0xf4, 0x11, 0x6e, 0xd0, 0xb4, 0x7c,
-	0xcf, 0x26, 0xbe, 0x47, 0x35, 0xa4, 0xd7, 0xfe, 0x22, 0x41, 0xf3, 0x76, 0x42, 0xf4, 0x16, 0x62,
-	0x34, 0xad, 0xd4, 0xfc, 0x20, 0xfa, 0x34, 0xf2, 0x9e, 0xa0, 0xa9, 0x7d, 0xa6, 0x4f, 0x40, 0xa4,
-	0xe6, 0xcc, 0xa2, 0x56, 0xe9, 0x2a, 0x0f, 0xca, 0x64, 0x17, 0x57, 0x1f, 0xda, 0xa0, 0x03, 0xcd,
-	0xa2, 0x8a, 0x6f, 0x20, 0x27, 0x4a, 0x33, 0x20, 0x92, 0x59, 0xb4, 0x73, 0x2f, 0x7c, 0xd7, 0xb0,
-	0x59, 0x32, 0xbd, 0x83, 0x58, 0x6a, 0x35, 0x1c, 0x65, 0xe8, 0xe5, 0x19, 0xb8, 0x9f, 0x8c, 0xf3,
-	0x79, 0x62, 0xfc, 0xd7, 0x17, 0x0d, 0x9b, 0x25, 0xef, 0x9e, 0x81, 0xbc, 0xd6, 0xdb, 0x8d, 0x1f,
-	0xeb, 0x1e, 0xd6, 0x5f, 0xca, 0x15, 0xa6, 0xab, 0xca, 0x81, 0x2c, 0xa9, 0xce, 0x3b, 0x15, 0x57,
-	0xdd, 0xda, 0x6f, 0xfb, 0xf2, 0x1f, 0x00, 0x00, 0xff, 0xff, 0x90, 0x5f, 0x23, 0x92, 0x69, 0x01,
-	0x00, 0x00,
+	// 641 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x54, 0xdf, 0x6e, 0xda, 0x3c,
+	0x14, 0x6f, 0x02, 0xe1, 0x83, 0x13, 0x0a, 0x7c, 0x56, 0x57, 0x31, 0x5a, 0x75, 0x1d, 0xd2, 0xa4,
+	0x5e, 0x4c, 0x69, 0xcb, 0xa4, 0x69, 0xb7, 0xa1, 0x64, 0x1d, 0x5b, 0x0a, 0xc8, 0x04, 0x75, 0xbb,
+	0x8a, 0x1c, 0xe3, 0xa5, 0x16, 0x21, 0x89, 0x70, 0xb8, 0xe8, 0x83, 0xec, 0x45, 0xf6, 0x36, 0x7b,
+	0x84, 0xbd, 0xc5, 0x64, 0x27, 0x81, 0xb6, 0x77, 0xe7, 0xf7, 0xc7, 0x3e, 0x3e, 0x3e, 0xc7, 0x06,
+	0x08, 0xa2, 0xeb, 0x2b, 0x2b, 0xdd, 0x24, 0x59, 0xd2, 0x3b, 0x09, 0x93, 0x24, 0x8c, 0xd8, 0xa5,
+	0x42, 0xc1, 0xf6, 0xe7, 0x25, 0x5b, 0xa7, 0xd9, 0x63, 0x2e, 0xf6, 0x7b, 0x50, 0x75, 0x13, 0xba,
+	0x42, 0x08, 0xaa, 0x7c, 0xcd, 0x78, 0x57, 0x3b, 0xd7, 0x2e, 0x1a, 0x58, 0xc5, 0xfd, 0x3f, 0x1a,
+	0x80, 0x14, 0xe7, 0x19, 0xc9, 0xb6, 0x02, 0x9d, 0x42, 0x23, 0xe3, 0x6b, 0x26, 0x32, 0xb2, 0x4e,
+	0x95, 0xaf, 0x82, 0xf7, 0xc4, 0x6e, 0x03, 0x7d, 0xbf, 0x01, 0x7a, 0x03, 0x66, 0x98, 0x0a, 0x9f,
+	0xc5, 0x24, 0x88, 0xd8, 0xb2, 0x5b, 0x39, 0xd7, 0x2e, 0xea, 0x18, 0xc2, 0x54, 0x38, 0x39, 0x83,
+	0xde, 0x42, 0x93, 0x0b, 0x9f, 0x3e, 0x90, 0x0d, 0x7d, 0xe0, 0x71, 0xd8, 0xad, 0x2a, 0x87, 0xc9,
+	0xc5, 0x4d, 0x49, 0xa1, 0x13, 0x68, 0x70, 0xe1, 0x47, 0x09, 0x5d, 0xb1, 0x65, 0xd7, 0x50, 0x7a,
+	0x9d, 0x0b, 0x57, 0x61, 0xf4, 0x09, 0xda, 0x51, 0x42, 0x49, 0xc6, 0x93, 0xd8, 0x4f, 0x09, 0x5d,
+	0xb1, 0xac, 0x5b, 0x3b, 0xd7, 0x2e, 0xcc, 0x41, 0xdb, 0x72, 0x0b, 0x7e, 0xa6, 0x68, 0xdc, 0x8a,
+	0x9e, 0xe1, 0xfe, 0xef, 0x0a, 0xb4, 0x9e, 0x5b, 0xd0, 0x3b, 0x90, 0xa6, 0x95, 0xff, 0xb2, 0xc8,
+	0x43, 0xc9, 0x7a, 0xbb, 0x42, 0xdf, 0x43, 0xbd, 0xdc, 0x4b, 0x15, 0x6b, 0x0e, 0x3a, 0xd6, 0x2c,
+	0x11, 0xbc, 0xdc, 0x89, 0x84, 0x0c, 0xef, 0x1c, 0xc8, 0x82, 0x9a, 0x50, 0xd7, 0xa7, 0xaa, 0x6f,
+	0x0d, 0x8e, 0x5f, 0x1c, 0xcc, 0xca, 0x2f, 0x17, 0x17, 0x2e, 0x74, 0x09, 0xcd, 0x80, 0x08, 0xe6,
+	0x4b, 0x28, 0x33, 0x54, 0x55, 0x86, 0xa6, 0x35, 0x24, 0x82, 0xcd, 0x73, 0x0e, 0x9b, 0xc1, 0x1e,
+	0xf4, 0xff, 0x6a, 0x50, 0x2b, 0x1a, 0xf4, 0x3f, 0x1c, 0x7a, 0xe3, 0xbb, 0xf1, 0xe4, 0xd6, 0xc7,
+	0xce, 0x6c, 0x8a, 0xbd, 0xce, 0x01, 0x7a, 0x0d, 0xaf, 0x3e, 0x8f, 0xbf, 0x3b, 0x23, 0x7f, 0x34,
+	0x9e, 0x7b, 0xf6, 0xe4, 0xc6, 0x29, 0x25, 0x0d, 0x75, 0xa0, 0x79, 0x3b, 0x9b, 0xfb, 0xd8, 0x59,
+	0xcc, 0xdc, 0xa9, 0x3d, 0xea, 0xe8, 0xa8, 0x0d, 0xa6, 0xfb, 0x75, 0x74, 0x5f, 0x5a, 0x2a, 0x8a,
+	0x98, 0xde, 0x7c, 0x2b, 0x89, 0xaa, 0xcc, 0xb0, 0x98, 0x3c, 0xa5, 0x0c, 0x74, 0x06, 0x3d, 0x77,
+	0x7a, 0xef, 0x8f, 0x27, 0x9e, 0x83, 0x27, 0xb6, 0xeb, 0x0f, 0x6d, 0xcf, 0x73, 0xf0, 0x0f, 0xdf,
+	0x76, 0x6d, 0x7c, 0xd7, 0xa9, 0xa1, 0x2e, 0x1c, 0x49, 0xbd, 0xa4, 0xe7, 0x5f, 0x16, 0xde, 0x68,
+	0x7a, 0x3f, 0xe9, 0xfc, 0x87, 0x10, 0xb4, 0xec, 0xe1, 0x64, 0x8a, 0xef, 0x6c, 0xb7, 0x70, 0xd7,
+	0xd1, 0x29, 0x74, 0x77, 0x5c, 0x9e, 0x49, 0x96, 0x93, 0xab, 0x8d, 0xfe, 0x2f, 0x0d, 0xda, 0x2f,
+	0xae, 0x1a, 0xf5, 0xa0, 0x1e, 0x91, 0x8c, 0x67, 0xdb, 0x25, 0x53, 0xfd, 0xd2, 0xf1, 0x0e, 0xcb,
+	0x89, 0x8d, 0x92, 0x38, 0xcc, 0x45, 0x5d, 0x89, 0x7b, 0x42, 0xae, 0x24, 0x94, 0x6e, 0x37, 0x84,
+	0x3e, 0xaa, 0xe6, 0xe8, 0x78, 0x87, 0xd1, 0x31, 0xd4, 0x68, 0xb2, 0xdd, 0x08, 0xa6, 0x1a, 0x60,
+	0xe0, 0x02, 0xa1, 0x23, 0x30, 0x44, 0xca, 0x8a, 0x49, 0xd4, 0x71, 0x0e, 0xfa, 0x21, 0x98, 0x4f,
+	0xfa, 0x83, 0x3a, 0x50, 0x59, 0x53, 0xaa, 0x4e, 0x63, 0x60, 0x19, 0x2a, 0x26, 0xa6, 0xea, 0x08,
+	0x92, 0x89, 0x15, 0x13, 0x11, 0xaa, 0xf2, 0x1a, 0x58, 0x86, 0xa8, 0x05, 0x3a, 0xe5, 0x45, 0x3a,
+	0x9d, 0x72, 0xf9, 0xa0, 0x36, 0x42, 0x70, 0x95, 0xc9, 0xc0, 0x2a, 0x1e, 0x04, 0x50, 0x1f, 0xba,
+	0xd7, 0x57, 0xea, 0xc5, 0x9e, 0x41, 0x6d, 0x11, 0xcb, 0xd1, 0x44, 0x86, 0x9c, 0xa9, 0x55, 0xcf,
+	0xb4, 0xf6, 0x8f, 0xb5, 0x7f, 0x80, 0x3e, 0xc2, 0x61, 0x1e, 0x2f, 0xd2, 0x25, 0xc9, 0x98, 0x40,
+	0xc7, 0x56, 0xfe, 0x11, 0x58, 0xe5, 0x47, 0x60, 0x39, 0xf2, 0x23, 0x78, 0xb6, 0xee, 0x4a, 0x0b,
+	0x6a, 0x4a, 0xfe, 0xf0, 0x2f, 0x00, 0x00, 0xff, 0xff, 0xc6, 0xe3, 0x1d, 0xf8, 0x43, 0x04, 0x00,
+	0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -231,6 +466,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type BL10LockClient interface {
 	Unlock(ctx context.Context, in *Lock, opts ...grpc.CallOption) (*LockStatus, error)
+	StatusUpdates(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (BL10Lock_StatusUpdatesClient, error)
 }
 
 type bL10LockClient struct {
@@ -250,9 +486,42 @@ func (c *bL10LockClient) Unlock(ctx context.Context, in *Lock, opts ...grpc.Call
 	return out, nil
 }
 
+func (c *bL10LockClient) StatusUpdates(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (BL10Lock_StatusUpdatesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_BL10Lock_serviceDesc.Streams[0], "/BL10Lock/StatusUpdates", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &bL10LockStatusUpdatesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type BL10Lock_StatusUpdatesClient interface {
+	Recv() (*LockStatus, error)
+	grpc.ClientStream
+}
+
+type bL10LockStatusUpdatesClient struct {
+	grpc.ClientStream
+}
+
+func (x *bL10LockStatusUpdatesClient) Recv() (*LockStatus, error) {
+	m := new(LockStatus)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // BL10LockServer is the server API for BL10Lock service.
 type BL10LockServer interface {
 	Unlock(context.Context, *Lock) (*LockStatus, error)
+	StatusUpdates(*empty.Empty, BL10Lock_StatusUpdatesServer) error
 }
 
 // UnimplementedBL10LockServer can be embedded to have forward compatible implementations.
@@ -261,6 +530,9 @@ type UnimplementedBL10LockServer struct {
 
 func (*UnimplementedBL10LockServer) Unlock(ctx context.Context, req *Lock) (*LockStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Unlock not implemented")
+}
+func (*UnimplementedBL10LockServer) StatusUpdates(req *empty.Empty, srv BL10Lock_StatusUpdatesServer) error {
+	return status.Errorf(codes.Unimplemented, "method StatusUpdates not implemented")
 }
 
 func RegisterBL10LockServer(s *grpc.Server, srv BL10LockServer) {
@@ -285,6 +557,27 @@ func _BL10Lock_Unlock_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BL10Lock_StatusUpdates_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(empty.Empty)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BL10LockServer).StatusUpdates(m, &bL10LockStatusUpdatesServer{stream})
+}
+
+type BL10Lock_StatusUpdatesServer interface {
+	Send(*LockStatus) error
+	grpc.ServerStream
+}
+
+type bL10LockStatusUpdatesServer struct {
+	grpc.ServerStream
+}
+
+func (x *bL10LockStatusUpdatesServer) Send(m *LockStatus) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 var _BL10Lock_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "BL10Lock",
 	HandlerType: (*BL10LockServer)(nil),
@@ -294,6 +587,12 @@ var _BL10Lock_serviceDesc = grpc.ServiceDesc{
 			Handler:    _BL10Lock_Unlock_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "StatusUpdates",
+			Handler:       _BL10Lock_StatusUpdates_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "bl10.proto",
 }
