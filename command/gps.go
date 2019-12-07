@@ -10,15 +10,15 @@ import (
 	"time"
 )
 
-func ProcessGPS(content []byte) (locationPacket bl10.LocationPacket) {
+func ProcessGPS(content []byte) (locationPacket *bl10.LocationPacket) {
 	return processLocation(content[1:])
 }
 
-func ProcessLocationAlarm(content []byte) (locationPacket bl10.LocationPacket) {
+func ProcessLocationAlarm(content []byte) (locationPacket *bl10.LocationPacket) {
 	return processLocation(content[1:])
 }
 
-func processLocation(content []byte) (locationPacket bl10.LocationPacket) {
+func processLocation(content []byte) (locationPacket *bl10.LocationPacket) {
 	year := int(content[0]) + 2000
 	month := int(content[1])
 	day := int(content[2])

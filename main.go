@@ -1,6 +1,7 @@
 package main
 
 import (
+	bl10 "bl10server/bl10comms"
 	"bl10server/command"
 	"bl10server/util"
 	"bytes"
@@ -19,12 +20,14 @@ func main() {
 
 var lockConnections = map[int]bl10Connection{}
 var imeiToConnection = map[string]int{}
+var serverConnections []bl10.BL10Lock_StatusUpdatesServer
 
 type bl10Connection struct {
-	conn      net.Conn
-	commandCh chan command.BL10Packet
-	connectCh chan confirmConnection
-	connID    int
+	conn                  net.Conn
+	commandCh             chan command.BL10Packet
+	connectCh             chan confirmConnection
+	lockStatusBroadcastCh chan bl10.LockStatus
+	connID                int
 }
 
 type confirmConnection struct {
@@ -48,6 +51,10 @@ func SendCommandToLock(imei string, commandStr string) error {
 	return nil
 }
 
+func addConsumer(stream bl10.BL10Lock_StatusUpdatesServer) {
+	serverConnections = append(serverConnections, stream)
+}
+
 func startServer() {
 	ln, err := net.Listen("tcp", ":9020")
 	connectionID := 1
@@ -68,6 +75,23 @@ func startServer() {
 		}
 	}()
 
+	lockStatusCh := make(chan bl10.LockStatus)
+	// This function should be made save.
+	go func() {
+		for {
+			lockStatus := <-lockStatusCh
+			index := 0
+			for _, serverConn := range serverConnections {
+				err := serverConn.Send(&lockStatus)
+				// Clean up not working connections.
+				if err == nil {
+					serverConnections[index] = serverConn
+				}
+			}
+			serverConnections = serverConnections[:index]
+		}
+	}()
+
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -75,10 +99,11 @@ func startServer() {
 		}
 		ch := make(chan command.BL10Packet)
 		bl10conn := bl10Connection{
-			conn:      conn,
-			commandCh: ch,
-			connectCh: confirmCh,
-			connID:    connectionID,
+			conn:                  conn,
+			commandCh:             ch,
+			connectCh:             confirmCh,
+			connID:                connectionID,
+			lockStatusBroadcastCh: lockStatusCh,
 		}
 		lockConnections[connectionID] = bl10conn
 		go bl10conn.handleConnection()
@@ -119,21 +144,6 @@ func (bl10conn bl10Connection) handleConnection() {
 			}
 		}
 	}()
-
-	// for {
-	// 	input := bufio.NewScanner(os.Stdin)
-	// 	input.Scan()
-	// 	switch input.Text() {
-	// 	case "u":
-	// 		fmt.Println("Unlock")
-	// 		ch <- command.GetOnlineCommand("UNLOCK#")
-
-	// 	case "s":
-	// 		fmt.Println("Status")
-	// 		ch <- command.GetOnlineCommand("STATUS#")
-	// 	}
-	// }
-
 }
 
 func (bl10conn bl10Connection) readMessage() error {
@@ -207,10 +217,20 @@ func (bl10conn bl10Connection) processContent(content []byte) command.BL10Packet
 		return command.GetAckHeartBeat()
 	case 0x32:
 		log.Println("GPS LOCATION")
-		command.ProcessGPS(content)
+		status := bl10.LockStatus{}
+		// imei moet in bl10conn worden opgeslagen.
+		status.Imei = "33333"
+		status.Timestamp = time.Now().Unix()
+		status.LocationPacket = command.ProcessGPS(content)
+		bl10conn.lockStatusBroadcastCh <- status
 	case 0x33:
 		log.Println("LOCATION INFORMATION")
-		command.ProcessLocationAlarm(content)
+		status := bl10.LockStatus{}
+		// imei moet in bl10conn worden opgeslagen.
+		status.Imei = "33333"
+		status.Timestamp = time.Now().Unix()
+		status.LocationPacket = command.ProcessGPS(content)
+		bl10conn.lockStatusBroadcastCh <- status
 	case 0x2C:
 		log.Println("WIFI")
 		log.Println(content)
