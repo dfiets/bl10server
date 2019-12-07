@@ -53,9 +53,6 @@ func SendCommandToLock(imei string, commandStr string) error {
 
 func addConsumer(stream bl10.BL10Lock_StatusUpdatesServer) {
 	serverConnections = append(serverConnections, stream)
-	for {
-
-	}
 }
 
 func startServer() {
