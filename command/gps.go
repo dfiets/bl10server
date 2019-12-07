@@ -18,7 +18,8 @@ func ProcessLocationAlarm(content []byte) (locationPacket *bl10.LocationPacket) 
 	return processLocation(content[1:])
 }
 
-func processLocation(content []byte) (locationPacket *bl10.LocationPacket) {
+func processLocation(content []byte) (*bl10.LocationPacket) {
+	locationPacket := bl10.LocationPacket{}
 	year := int(content[0]) + 2000
 	month := int(content[1])
 	day := int(content[2])
@@ -62,14 +63,15 @@ func processLocation(content []byte) (locationPacket *bl10.LocationPacket) {
 	locationPacket.Status = processStatus(content[startIndex])
 	log.Printf("Complete extracted location packeg: \n %+v \n", locationPacket)
 
-	return locationPacket
+	return &locationPacket
 
 }
 
-func processGpsInformation(data []byte) (positionPackage *bl10.PositionPackage) {
+func processGpsInformation(data []byte) (*bl10.PositionPackage) {
+	positionPackage := bl10.PositionPackage{}
 	if len(data) != 12 {
 		log.Printf("processGpsInformation data length not long enough, length is %d.", len(data))
-		return
+		return &positionPackage
 	}
 	positionPackage.NumberOfSatelites = int32(data[0])
 	positionPackage.Latitude = float32(util.BytesToInt(data[1:5])) / 1800000
@@ -77,13 +79,14 @@ func processGpsInformation(data []byte) (positionPackage *bl10.PositionPackage) 
 	positionPackage.Speed = float32(data[10])
 	positionPackage.Course = int32(0x3F & binary.BigEndian.Uint32(data[11:13]))
 	log.Printf("Extracted location:\n %+v \n", positionPackage)
-	return positionPackage
+	return &positionPackage
 }
 
-func processBaseStationInformation(data []byte) (baseStation *bl10.BaseStation) {
+func processBaseStationInformation(data []byte) (*bl10.BaseStation) {
+	baseStation := bl10.BaseStation{}
 	if len(data) != 9 {
 		log.Printf("processBaseStationInformation data length not long enough, length is %d.", len(data))
-		return
+		return &baseStation
 	}
 
 	baseStation.Mcc = int32(util.BytesToInt(data[0:2]))
@@ -92,7 +95,7 @@ func processBaseStationInformation(data []byte) (baseStation *bl10.BaseStation) 
 	baseStation.Ci = int32(util.BytesToInt(data[5:8]))
 	baseStation.Rssi = int32(data[8])
 	log.Printf("Extracted baseStation:\n %+v \n", baseStation)
-	return baseStation
+	return &baseStation
 }
 
 func processSubBaseStationInformation() {
