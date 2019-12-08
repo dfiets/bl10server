@@ -28,6 +28,7 @@ type bl10Connection struct {
 	connectCh             chan confirmConnection
 	lockStatusBroadcastCh chan bl10.LockStatus
 	connID                int
+	serialNumber          int
 }
 
 type confirmConnection struct {
@@ -98,13 +99,14 @@ func startServer() {
 		if err != nil {
 			log.Print(err)
 		}
-		ch := make(chan command.BL10Packet)
+		ch := make(chan command.BL10Packet, 10)
 		bl10conn := bl10Connection{
 			conn:                  conn,
 			commandCh:             ch,
 			connectCh:             confirmCh,
 			connID:                connectionID,
 			lockStatusBroadcastCh: lockStatusCh,
+			serialNumber:          -1,
 		}
 		lockConnections[connectionID] = bl10conn
 		go bl10conn.handleConnection()
@@ -128,11 +130,12 @@ func (bl10conn bl10Connection) handleConnection() {
 	}()
 
 	go func() {
-		serialNumber := 0
 		for {
 			select {
 			case responsePacket := <-bl10conn.commandCh:
-				_, err := bl10conn.conn.Write(responsePacket.CreatePacket(serialNumber))
+				bl10conn.serialNumber++
+				log.Println("Send serialNumber", bl10conn.serialNumber)
+				_, err := bl10conn.conn.Write(responsePacket.CreatePacket(bl10conn.serialNumber))
 				if err != nil {
 					log.Println("ERROR IN WRITE GOROUTINE")
 					log.Println(err)
@@ -186,6 +189,8 @@ func (bl10conn bl10Connection) readMessage() error {
 
 	serialNumberBytes := make([]byte, 2)
 	_, err = conn.Read(serialNumberBytes)
+	bl10conn.serialNumber = util.BytesToInt(serialNumberBytes)
+	log.Println("Received serial_number", bl10conn.serialNumber)
 	errorCheckBytes := make([]byte, 2)
 	_, err = conn.Read(errorCheckBytes)
 
