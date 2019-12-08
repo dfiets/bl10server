@@ -133,7 +133,7 @@ func (bl10conn *bl10Connection) handleConnection() {
 		for {
 			select {
 			case responsePacket := <-bl10conn.commandCh:
-				bl10conn.serialNumber++
+				bl10conn.serialNumber = bl10conn.serialNumber + 1
 				log.Println("Send serialNumber", bl10conn.serialNumber)
 				_, err := bl10conn.conn.Write(responsePacket.CreatePacket(bl10conn.serialNumber))
 				if err != nil {
