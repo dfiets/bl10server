@@ -75,7 +75,7 @@ func processGpsInformation(data []byte) *bl10.PositionPackage {
 	}
 	positionPackage.NumberOfSatelites = int32(data[0])
 	positionPackage.Latitude = float32(util.BytesToInt(data[1:5])) / 1800000
-	positionPackage.Longitude = float32(util.BytesToInt(data[5:9])) / 18000000
+	positionPackage.Longitude = float32(util.BytesToInt(data[5:9])) / 1800000
 	positionPackage.Speed = float32(data[10])
 	positionPackage.Course = int32(0x3F & binary.BigEndian.Uint16(data[11:13]))
 	log.Printf("Extracted location:\n %+v \n", positionPackage)
