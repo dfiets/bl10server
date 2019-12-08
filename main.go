@@ -61,7 +61,7 @@ func startServer() {
 	if err != nil {
 		log.Print(err)
 	}
-	confirmCh := make(chan confirmConnection)
+	confirmCh := make(chan confirmConnection, 100)
 
 	go func() {
 		for {
@@ -75,7 +75,7 @@ func startServer() {
 		}
 	}()
 
-	lockStatusCh := make(chan bl10.LockStatus)
+	lockStatusCh := make(chan bl10.LockStatus, 100)
 	// This function should be made save.
 	go func() {
 		for {
