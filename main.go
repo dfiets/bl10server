@@ -114,7 +114,7 @@ func startServer() {
 	}
 }
 
-func (bl10conn bl10Connection) handleConnection() {
+func (bl10conn *bl10Connection) handleConnection() {
 	stop := make(chan bool)
 	go func() {
 
@@ -150,7 +150,7 @@ func (bl10conn bl10Connection) handleConnection() {
 	}()
 }
 
-func (bl10conn bl10Connection) readMessage() error {
+func (bl10conn *bl10Connection) readMessage() error {
 	conn := bl10conn.conn
 	p := make([]byte, 2)
 	_, err := conn.Read(p)
@@ -206,7 +206,7 @@ func (bl10conn bl10Connection) readMessage() error {
 
 }
 
-func (bl10conn bl10Connection) processContent(content []byte) command.BL10Packet {
+func (bl10conn *bl10Connection) processContent(content []byte) command.BL10Packet {
 	switch content[0] {
 	case 0x01:
 		log.Println("LOGIN")
