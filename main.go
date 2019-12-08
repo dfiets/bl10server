@@ -86,6 +86,7 @@ func startServer() {
 				// Clean up not working connections.
 				if err == nil {
 					serverConnections[index] = serverConn
+					index++
 				}
 			}
 			serverConnections = serverConnections[:index]
