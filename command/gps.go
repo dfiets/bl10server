@@ -10,12 +10,11 @@ import (
 	"time"
 )
 
-func ProcessGPS(content []byte) (locationPacket *bl10.LocationPacket) {
-	return processLocation(content[1:])
-}
-
-func ProcessLocationAlarm(content []byte) (locationPacket *bl10.LocationPacket) {
-	return processLocation(content[1:])
+func ProcessGPS(content []byte, imei string) (lockStatus bl10.LockStatus) {
+	lockStatus.LocationPacket = processLocation(content[1:])
+	lockStatus.Imei = imei
+	lockStatus.Timestamp = time.Now().Unix()
+	return lockStatus
 }
 
 func processLocation(content []byte) *bl10.LocationPacket {

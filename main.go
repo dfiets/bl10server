@@ -29,6 +29,7 @@ type bl10Connection struct {
 	lockStatusBroadcastCh chan bl10.LockStatus
 	connID                int
 	serialNumber          int
+	imei                  string
 }
 
 type confirmConnection struct {
@@ -211,6 +212,7 @@ func (bl10conn *bl10Connection) processContent(content []byte) command.BL10Packe
 	case 0x01:
 		log.Println("LOGIN")
 		imei := command.ProcessLogin(content)
+		bl10conn.imei = imei
 		bl10conn.connectCh <- confirmConnection{connID: bl10conn.connID, imei: imei}
 		return command.GetAckLogin(time.Now().UTC())
 	case 0x21:
@@ -223,25 +225,12 @@ func (bl10conn *bl10Connection) processContent(content []byte) command.BL10Packe
 		return command.GetAckHeartBeat()
 	case 0x32:
 		log.Println("GPS LOCATION")
-		status := bl10.LockStatus{}
-		// imei moet in bl10conn worden opgeslagen.
-		status.Imei = "33333"
-		status.Timestamp = time.Now().Unix()
-		status.LocationPacket = command.ProcessGPS(content)
-		bl10conn.lockStatusBroadcastCh <- status
+		bl10conn.lockStatusBroadcastCh <- command.ProcessGPS(content, bl10conn.imei)
 	case 0x33:
 		log.Println("LOCATION INFORMATION")
-		status := bl10.LockStatus{}
-		// imei moet in bl10conn worden opgeslagen.
-		status.Imei = "33333"
-		status.Timestamp = time.Now().Unix()
-		status.LocationPacket = command.ProcessGPS(content)
-		bl10conn.lockStatusBroadcastCh <- status
-	case 0x2C:
-		log.Println("WIFI")
-		log.Println(content)
+		bl10conn.lockStatusBroadcastCh <- command.ProcessGPS(content, bl10conn.imei)
 	case 0x98:
-		log.Println("INFORMATION TRANSMISSION PACKET")
+		log.Println("INFORMATION TRANSMISSION PACKET, not implemented")
 		return command.GetAckInformationTransmision()
 	default:
 		log.Println("UNKNOWN protocolnumber: ERROR!!!")
