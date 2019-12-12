@@ -194,10 +194,8 @@ func (bl10conn *bl10Connection) readMessage() error {
 
 	closeBytes := make([]byte, 2)
 	_, err = conn.Read(closeBytes)
-	if bytes.Equal(closeBytes, []byte{0x0D, 0x0A}) {
-		log.Println("closeBytes")
-	} else {
-		log.Println("Something went wrong", closeBytes)
+	if !bytes.Equal(closeBytes, []byte{0x0D, 0x0A}) {
+		log.Printf("%s Something went wrong %+v", bl10conn.imei, closeBytes)
 	}
 
 	return nil
@@ -207,30 +205,34 @@ func (bl10conn *bl10Connection) readMessage() error {
 func (bl10conn *bl10Connection) processContent(content []byte) command.BL10Packet {
 	switch content[0] {
 	case 0x01:
-		log.Println("LOGIN")
 		imei := command.ProcessLogin(content)
 		bl10conn.imei = imei
-		bl10conn.connectCh <- confirmConnection{connID: bl10conn.connID, imei: imei}
+		confirm := confirmConnection{connID: bl10conn.connID, imei: imei}
+		log.Printf("%s LOGIN %+v", imei, confirm)
+		bl10conn.connectCh <- confirm
 		return command.GetAckLogin(time.Now().UTC())
 	case 0x21:
-		log.Println("ONLINE COMMAND RESPONSE")
-		command.ProcessOnlineCommand(content)
+		response := command.ProcessOnlineCommand(content)
+		log.Printf("%s ONLINE COMMAND RESPONSE '%s'", bl10conn.imei, response)
 		return command.BL10Packet{}
 	case 0x23:
-		log.Println("HEARTBEAT")
-		bl10conn.lockStatusBroadcastCh <- command.ProcessHeartBeat(content, bl10conn.imei)
+		heartbeatContent := command.ProcessHeartBeat(content, bl10conn.imei)
+		log.Printf("%s HEARTBEAT %+v", bl10conn.imei, heartbeatContent)
+		bl10conn.lockStatusBroadcastCh <- heartbeatContent
 		return command.GetAckHeartBeat()
 	case 0x32:
-		log.Println("GPS LOCATION")
-		bl10conn.lockStatusBroadcastCh <- command.ProcessGPS(content, bl10conn.imei)
+		gpsData := command.ProcessGPS(content, bl10conn.imei)
+		bl10conn.lockStatusBroadcastCh <- gpsData
+		log.Printf("%s GPS LOCATION %+v", bl10conn.imei, gpsData)
 	case 0x33:
-		log.Println("LOCATION INFORMATION")
-		bl10conn.lockStatusBroadcastCh <- command.ProcessGPS(content, bl10conn.imei)
+		gpsData := command.ProcessGPS(content, bl10conn.imei)
+		bl10conn.lockStatusBroadcastCh <- gpsData
+		log.Printf("%s LOCATION INFORMATION %+v", bl10conn.imei, gpsData)
 	case 0x98:
-		log.Println("INFORMATION TRANSMISSION PACKET, not implemented")
+		log.Printf("%s INFORMATION TRANSMISSION PACKET, not implemented", bl10conn.imei)
 		return command.GetAckInformationTransmision()
 	default:
-		log.Println("UNKNOWN protocolnumber: ERROR!!!")
+		log.Printf("%s UNKNOWN protocolnumber: ERROR!!!", bl10conn.imei)
 	}
 	return command.BL10Packet{}
 }

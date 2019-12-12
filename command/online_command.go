@@ -1,10 +1,8 @@
 package command
 
-import "log"
-
-func ProcessOnlineCommand(content []byte) {
+func ProcessOnlineCommand(content []byte) string {
 	onlineCommandResponse := string(content[6:])
-	log.Println(onlineCommandResponse)
+	return onlineCommandResponse
 }
 
 func GetOnlineCommand(cmd string) BL10Packet {
