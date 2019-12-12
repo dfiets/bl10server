@@ -221,7 +221,7 @@ func (bl10conn *bl10Connection) processContent(content []byte) command.BL10Packe
 		return command.BL10Packet{}
 	case 0x23:
 		log.Println("HEARTBEAT")
-		command.ProcessHeartBeat(content)
+		bl10conn.lockStatusBroadcastCh <- command.ProcessHeartBeat(content, bl10conn.imei)
 		return command.GetAckHeartBeat()
 	case 0x32:
 		log.Println("GPS LOCATION")

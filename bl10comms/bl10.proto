@@ -2,9 +2,9 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 
 service BL10Lock {
-        rpc Unlock(Lock) returns (LockStatus) {}
-        rpc Alarm(Lock) returns (LockStatus) {}
-        rpc Locate(Lock) returns (LockStatus) {}
+        rpc Unlock(Lock) returns (CommandSent) {}
+        rpc Alarm(Lock) returns (CommandSent) {}
+        rpc Locate(Lock) returns (CommandSent) {}
         rpc StatusUpdates(google.protobuf.Empty) returns (stream LockStatus);
 }
 
@@ -12,13 +12,31 @@ message Lock {
         string imei = 1;
 }
 
+message CommandSent {
+        string imei = 1;
+        bool is_sent = 2;
+}
+
 message LockStatus {
         int64 timestamp = 1;
         string imei = 2;
-        bool gps_enabled = 3;
-        bool is_charching = 4;
-        bool is_locked = 5;
-        LocationPacket location_packet = 6;
+        HeartBeatPacket heartbeat_packet = 3;
+        LocationPacket location_packet = 4;
+}
+
+message HeartBeatPacket {
+        bool gps_enabled = 1;
+        bool is_charching = 2;
+        bool is_locked = 3;
+        int32 voltage = 4;
+        enum SignalStrength {
+                NO_SIGNAL = 0;
+                VERY_WEAK_SIGNAL = 1;
+                WEAK_SIGNAL = 2;
+                GOOD_SIGNAL = 3;
+                STRONG_SIGNAL = 4;
+        }
+        SignalStrength signal_strength = 5;
 }
 
 message LocationPacket {

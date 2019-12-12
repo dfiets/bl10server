@@ -16,34 +16,34 @@ import (
 type bl10LockServer struct {
 }
 
-func (s *bl10LockServer) Unlock(ctx context.Context, lock *bl10.Lock) (*bl10.LockStatus, error) {
+func (s *bl10LockServer) Unlock(ctx context.Context, lock *bl10.Lock) (*bl10.CommandSent, error) {
 	err := SendCommandToLock(lock.GetImei(), "UNLOCK#")
 	if err != nil {
 		return nil, err
 	}
 
 	// No feature was found, return an unnamed feature
-	return &bl10.LockStatus{IsCharching: true, IsLocked: true, Imei: lock.GetImei()}, nil
+	return &bl10.CommandSent{Imei: lock.GetImei(), IsSent: true}, nil
 }
 
-func (s *bl10LockServer) Alarm(ctx context.Context, lock *bl10.Lock) (*bl10.LockStatus, error) {
+func (s *bl10LockServer) Alarm(ctx context.Context, lock *bl10.Lock) (*bl10.CommandSent, error) {
 	err := SendCommandToLock(lock.GetImei(), "SDFIND,ON,5,15,1#")
 	if err != nil {
 		return nil, err
 	}
 
 	// No feature was found, return an unnamed feature
-	return &bl10.LockStatus{IsCharching: true, IsLocked: true, Imei: lock.GetImei()}, nil
+	return &bl10.CommandSent{Imei: lock.GetImei(), IsSent: true}, nil
 }
 
-func (s *bl10LockServer) Locate(ctx context.Context, lock *bl10.Lock) (*bl10.LockStatus, error) {
+func (s *bl10LockServer) Locate(ctx context.Context, lock *bl10.Lock) (*bl10.CommandSent, error) {
 	err := SendCommandToLock(lock.GetImei(), "LJDW#")
 	if err != nil {
 		return nil, err
 	}
 
 	// No feature was found, return an unnamed feature
-	return &bl10.LockStatus{IsCharching: true, IsLocked: true, Imei: lock.GetImei()}, nil
+	return &bl10.CommandSent{Imei: lock.GetImei(), IsSent: true}, nil
 }
 
 func (s *bl10LockServer) StatusUpdates(empty *empty.Empty, stream bl10.BL10Lock_StatusUpdatesServer) error {
