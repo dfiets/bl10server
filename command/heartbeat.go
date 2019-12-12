@@ -26,11 +26,12 @@ func extractHeartBeatData(content []byte) *bl10.HeartBeatPacket {
 	return heartBeatPacket
 }
 
-func convertTerminalInformation(terminalInformationByte byte) (result *bl10.HeartBeatPacket) {
+func convertTerminalInformation(terminalInformationByte byte) *bl10.HeartBeatPacket {
+	result := bl10.HeartBeatPacket{}
 	result.GpsEnabled = (terminalInformationByte>>5)&0x01 == 0x01
 	result.IsCharching = terminalInformationByte>>2&0x01 == 0x01
 	result.IsLocked = terminalInformationByte&0x01 == 0x01
-	return result
+	return &result
 }
 
 func convertVoltage(voltageLevelBytes []byte) uint16 {
