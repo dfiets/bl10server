@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	log.Println("started")
+	log.Println("Started bl10server")
 
 	go startServer()
 	startGrpcServer()
@@ -49,6 +49,7 @@ func SendCommandToLock(imei string, commandStr string) error {
 	if !ok {
 		return errors.New("Connection doesn't exist anymore")
 	}
+	log.Printf("Send command %s to %s", commandStr, imei)
 	bl10Connection.commandCh <- command.GetOnlineCommand(commandStr)
 	return nil
 }
@@ -73,7 +74,7 @@ func startServer() {
 				delete(lockConnections, val)
 			}
 			imeiToConnection[confirmedConnection.imei] = confirmedConnection.connID
-			log.Println("registered imei: ", confirmedConnection.imei)
+			log.Println("Registered imei: ", confirmedConnection.imei)
 		}
 	}()
 
@@ -120,7 +121,6 @@ func (bl10conn *bl10Connection) handleConnection() {
 	go func() {
 
 		for {
-			log.Println("New message.")
 			err := bl10conn.readMessage()
 			if err != nil {
 				log.Println("ERROR IN READ GOROUTINE")
@@ -135,7 +135,6 @@ func (bl10conn *bl10Connection) handleConnection() {
 			select {
 			case responsePacket := <-bl10conn.commandCh:
 				(*bl10conn).serialNumber++
-				log.Println("Send serialNumber", bl10conn.serialNumber)
 				_, err := bl10conn.conn.Write(responsePacket.CreatePacket(bl10conn.serialNumber))
 				if err != nil {
 					log.Println("ERROR IN WRITE GOROUTINE")
@@ -176,7 +175,6 @@ func (bl10conn *bl10Connection) readMessage() error {
 	}
 	packageLength = packageLength - 4
 
-	log.Println(packageLength)
 	content := make([]byte, packageLength)
 	_, err = conn.Read(content)
 	if err != nil {
@@ -191,7 +189,6 @@ func (bl10conn *bl10Connection) readMessage() error {
 	serialNumberBytes := make([]byte, 2)
 	_, err = conn.Read(serialNumberBytes)
 	bl10conn.serialNumber = util.BytesToInt(serialNumberBytes)
-	log.Println("Received serial_number", bl10conn.serialNumber)
 	errorCheckBytes := make([]byte, 2)
 	_, err = conn.Read(errorCheckBytes)
 

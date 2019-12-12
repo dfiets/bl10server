@@ -7,7 +7,7 @@ import (
 )
 
 func ProcessLogin(content []byte) string {
-	log.Println("IMEI ", convertBytesToIMEI(content[1:9]))
+	log.Println("Login IMEI: ", convertBytesToIMEI(content[1:9]))
 	return convertBytesToIMEI(content[1:9])
 }
 
