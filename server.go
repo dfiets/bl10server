@@ -37,7 +37,7 @@ func (s *bl10LockServer) Alarm(ctx context.Context, lock *bl10.Lock) (*bl10.Comm
 }
 
 func (s *bl10LockServer) Locate(ctx context.Context, lock *bl10.Lock) (*bl10.CommandSent, error) {
-	err := SendCommandToLock(lock.GetImei(), "LJDW#")
+	err := SendCommandToLock(lock.GetImei(), "WIFION,30#")
 	if err != nil {
 		return nil, err
 	}

@@ -152,6 +152,7 @@ func (bl10conn *bl10Connection) handleConnection() {
 
 func (bl10conn *bl10Connection) readMessage() error {
 	conn := bl10conn.conn
+	log.Print("Start reading")
 	p := make([]byte, 2)
 	_, err := conn.Read(p)
 
@@ -164,6 +165,7 @@ func (bl10conn *bl10Connection) readMessage() error {
 	packetLengthTwoBytes := bytes.Equal(p, []byte{0x79, 0x79})
 
 	if !(packetLengthOneByte || packetLengthTwoBytes) {
+		log.Print("Something different")
 		return nil
 	} else if packetLengthOneByte {
 		packageLength, err = getLength(conn, 1)
@@ -224,10 +226,12 @@ func (bl10conn *bl10Connection) processContent(content []byte) command.BL10Packe
 		gpsData := command.ProcessGPS(content, bl10conn.imei)
 		bl10conn.lockStatusBroadcastCh <- gpsData
 		log.Printf("%s GPS LOCATION %+v", bl10conn.imei, gpsData)
+		return command.GetAckHeartBeatLocation(0x32)
 	case 0x33:
 		gpsData := command.ProcessGPS(content, bl10conn.imei)
 		bl10conn.lockStatusBroadcastCh <- gpsData
 		log.Printf("%s LOCATION INFORMATION %+v", bl10conn.imei, gpsData)
+		return command.GetAckHeartBeatLocation(0x33)
 	case 0x98:
 		log.Printf("%s INFORMATION TRANSMISSION PACKET, not implemented", bl10conn.imei)
 		return command.GetAckInformationTransmision()

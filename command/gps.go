@@ -131,3 +131,9 @@ func processStatus(data byte) bl10.LocationPacket_Status {
 	}
 	return 0xFF
 }
+
+func GetAckHeartBeatLocation(protocolNumber byte) BL10Packet {
+	result := BL10Packet{}
+	result.protocolNumber = protocolNumber
+	return result
+}
