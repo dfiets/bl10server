@@ -1,6 +1,6 @@
 # README
 
-bl10server is a very application that makes it possible to lock/unlock and track shared-bicycles with a bl10 lock easily and reliably. This server can easily be integrated in your own solution, communicaton with this server is via gRPC.
+bl10server is a very simple application that makes it possible to lock/unlock and track shared-bicycles with a bl10 lock easily and reliably. This server can easily be integrated in your own solution, communicaton with this server is via gRPC.
 
 
 ## How to install?
