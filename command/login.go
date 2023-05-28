@@ -1,13 +1,11 @@
 package command
 
 import (
-	"log"
 	"strconv"
 	"time"
 )
 
 func ProcessLogin(content []byte) string {
-	log.Println("Login IMEI: ", convertBytesToIMEI(content[1:9]))
 	return convertBytesToIMEI(content[1:9])
 }
 
